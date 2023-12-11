@@ -10,7 +10,7 @@ const templatePath = "./templates"
 const layoutPath = templatePath + "/layout.html"
 
 var (
-	templates = template.Must(template.ParseGlob(templatePath + "/index.html"))
+	templates = template.Must(template.ParseFiles(layoutPath, templatePath+"/index.html"))
 )
 
 func main() {
@@ -19,8 +19,8 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	templates.ExecuteTemplate(w, "index.html", map[string]interface{}{
-		"Title": "Hello World",
-		"Text":  "Hello World",
+	templates.ExecuteTemplate(w, "layout.html", map[string]interface{}{
+		"PageTitle": "Home Page",
+		"Text":      "Hello World",
 	})
 }
