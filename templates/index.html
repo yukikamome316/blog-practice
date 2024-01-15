@@ -1,5 +1,13 @@
 {{define "body"}}
-    <link rel="stylesheet" href="/css/index.css" />
-    <h1>ブログ一覧</h1>
-    <a href="/post/new">新規作成</a>
+<h1>{{.Text}}</h1>
+<a href="/post/new">新規作成</a>
+<ul>
+  {{range .Posts}}
+  <li>
+    <a href="/post/{{.ID}}"
+      >{{.Title}} by {{.Author}} on {{.CreatedAt}}</a
+    >
+  </li>
+  {{end}}
+</ul>
 {{end}}

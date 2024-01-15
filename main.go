@@ -31,6 +31,8 @@ const (
 	// ブログポストテーブルにデータを挿入するSQL文
 	insertPostQuery     = `INSERT INTO posts (title, body, author, created_at) VALUES (?, ?, ?, ?)`
 	selectPostByIdQuery = `SELECT * FROM posts WHERE id = ?`
+	// ブログポストテーブルから全てのデータを取得するSQL文
+	selectAllPostsQuery = `SELECT * FROM posts`
 )
 
 var (
@@ -57,7 +59,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", indexHandler)
-	http.HandleFunc("/post", postHandler)
+	http.HandleFunc("/post/", postHandler)
 	http.HandleFunc("/post/new", createPostHandler)
 
 	fmt.Println("Server is listening on http://localhost:8080")
@@ -65,9 +67,15 @@ func main() {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
+	posts, err := getAllPosts()
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
 	indexTemplate.ExecuteTemplate(w, "layout.html", map[string]interface{}{
-		"PageTitle": "Home Page",
-		"Text":      "Hello World",
+		"PageTitle": "記事一覧",
+		"Posts":     posts,
 	})
 }
 
@@ -101,6 +109,15 @@ func createPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func dbConnect() *sqlx.DB {
+	// SQLite3のデータベースに接続
+	db, err := sqlx.Open("sqlite3", dbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return db
+}
+
 func postHandler(w http.ResponseWriter, r *http.Request) {
 	// URLのPathからIDを取得
 	id := r.URL.Path[len("/post/"):]
@@ -126,6 +143,19 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		"CreatedAt": time.Unix(post.CreatedAt, 0).Format("2006-01-02 15:04:05"),
 		"Author":    post.Author,
 	})
+}
+
+// 全てのブログポストを取得
+func getAllPosts() ([]Post, error) {
+	// ブログポストを全て取得
+	var posts []Post
+	err := db.Select(&posts, selectAllPostsQuery)
+	if err != nil {
+		log.Print(err)
+		// InternalServerErrorを返す
+		return posts, err
+	}
+	return posts, nil
 }
 
 // ブログポストをIDで取得
