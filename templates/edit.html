@@ -1,0 +1,17 @@
+{{define "body"}}
+<link rel="stylesheet" href="/css/create.css" />
+<a href="/post/{{.ID}}">戻る</a>
+<h2>編集</h2>
+<a>{{.Message}}</a>
+<form action="" method="POST">
+  <div>
+    <label for="title">タイトル</label>
+    <input type="text" name="title" id="title" value="{{.Title}}" required />
+    <label for="author">作成者</label>
+    <input type="text" name="author" id="author" value="{{.Author}}" required />
+    <label for="body">内容</label>
+    <textarea name="body" id="body" required>{{.Body}}</textarea>
+    <button type="submit">更新</button>
+  </div>
+</form>
+{{end}}

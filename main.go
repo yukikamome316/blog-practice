@@ -17,6 +17,7 @@ const (
 	layoutPath   = templatePath + "/layout.html"
 	createPath   = templatePath + "/create.html"
 	postPath     = templatePath + "/post.html"
+	editPath     = templatePath + "/edit.html"
 
 	dbPath = "./db.sqlite3"
 
@@ -47,6 +48,7 @@ var (
 	indexTemplate  = template.Must(template.New("layout.html").Funcs(funcDate).ParseFiles(layoutPath, templatePath+"/index.html"))
 	createTemplate = template.Must(template.ParseFiles(layoutPath, createPath))
 	postTemplate   = template.Must(template.ParseFiles(layoutPath, postPath))
+	editTemplate   = template.Must(template.ParseFiles(layoutPath, editPath))
 )
 
 type Post struct {
@@ -69,6 +71,7 @@ func main() {
 	http.HandleFunc("/post/", postHandler)
 	http.HandleFunc("/post/new", createPostHandler)
 	http.HandleFunc("/post/delete/", deletePostHandler)
+	http.HandleFunc("/post/edit/", editPostHandler)
 
 	fmt.Println("Server is listening on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -138,6 +141,56 @@ func deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
+func editPostHandler(w http.ResponseWriter, r *http.Request) {
+	// URLのPathからIDを取得
+	id := r.URL.Path[len("/post/edit/"):]
+	//idをint型に変換
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		log.Print(err)
+		// InternalServerErrorを返す
+		return
+	}
+	// ブログポストを取得
+	post, err := getPostById(idInt)
+	if err != nil {
+		log.Print(err)
+		// InternalServerErrorを返す
+		return
+	}
+	if r.Method == "GET" {
+		// GETリクエストの場合はテンプレートを表示
+		editTemplate.ExecuteTemplate(w, "layout.html", map[string]interface{}{
+			"PageTitle": "ブログポスト編集",
+			"ID":        post.ID,
+			"Title":     post.Title,
+			"Body":      post.Body,
+			"Author":    post.Author,
+		})
+	} else if r.Method == "POST" {
+		// POSTリクエストの場合はブログポストを作成
+		title := r.FormValue("title")
+		body := r.FormValue("body")
+		author := r.FormValue("author")
+		createdAt := time.Now().Unix()
+		// フォームに空の項目がある場合はエラーを返す
+		if title == "" || body == "" || author == "" {
+			log.Print("フォームに空の項目があります")
+			editTemplate.ExecuteTemplate(w, "layout.html", map[string]interface{}{
+				"Message": "フォームに空の項目があります",
+			})
+			return
+		}
+		err := updatePostById(idInt, title, body, author, createdAt)
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		// 作成したブログポストを表示
+		http.Redirect(w, r, "/post/"+strconv.Itoa(idInt), http.StatusMovedPermanently)
+	}
+}
+
 func dbConnect() *sqlx.DB {
 	// SQLite3のデータベースに接続
 	db, err := sqlx.Open("sqlite3", dbPath)
@@ -173,6 +226,15 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		"CreatedAt": time.Unix(post.CreatedAt, 0).Format("2006-01-02 15:04:05"),
 		"Author":    post.Author,
 	})
+}
+
+func updatePostById(id int, title string, body string, author string, createdAt int64) error {
+	_, err := db.Exec(updatePostQuery, title, body, author, createdAt, id)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
 }
 
 // 全てのブログポストを取得
