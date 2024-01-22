@@ -33,11 +33,19 @@ const (
 	selectPostByIdQuery = `SELECT * FROM posts WHERE id = ?`
 	// ブログポストテーブルから全てのデータを取得するSQL文
 	selectAllPostsQuery = `SELECT * FROM posts`
+	deletePostQuery     = `DELETE FROM posts WHERE id = ?`
 )
 
 var (
-	db             *sqlx.DB
-	indexTemplate  = template.Must(template.ParseFiles(layoutPath, templatePath+"/index.html"))
+	db *sqlx.DB
+
+	funcDate = template.FuncMap{
+		"date": func(t int64) string {
+			return time.Unix(t, 0).Format("2006-01-02 15:04:05")
+		},
+	}
+
+	indexTemplate  = template.Must(template.New("layout.html").Funcs(funcDate).ParseFiles(layoutPath, templatePath+"/index.html"))
 	createTemplate = template.Must(template.ParseFiles(layoutPath, createPath))
 	postTemplate   = template.Must(template.ParseFiles(layoutPath, postPath))
 )
@@ -61,6 +69,7 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/post/", postHandler)
 	http.HandleFunc("/post/new", createPostHandler)
+	http.HandleFunc("/post/delete/", deletePostHandler)
 
 	fmt.Println("Server is listening on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
@@ -109,6 +118,27 @@ func createPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func deletePostHandler(w http.ResponseWriter, r *http.Request) {
+	// URLのPathからIDを取得
+	id := r.URL.Path[len("/post/delete/"):]
+	//idをint型に変換
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		log.Print(err)
+		// InternalServerErrorを返す
+		return
+	}
+	// ブログポストを取得
+	err = deletePostById(idInt)
+	if err != nil {
+		log.Print(err)
+		// InternalServerErrorを返す
+		return
+	}
+	// テンプレートを表示
+	http.Redirect(w, r, "/", http.StatusMovedPermanently)
+}
+
 func dbConnect() *sqlx.DB {
 	// SQLite3のデータベースに接続
 	db, err := sqlx.Open("sqlite3", dbPath)
@@ -138,6 +168,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	// テンプレートを表示
 	postTemplate.ExecuteTemplate(w, "layout.html", map[string]interface{}{
 		"Title":     post.Title,
+		"ID":        post.ID,
 		"PageTitle": post.Title,
 		"Body":      post.Body,
 		"CreatedAt": time.Unix(post.CreatedAt, 0).Format("2006-01-02 15:04:05"),
@@ -192,6 +223,15 @@ func insertPost(title string, body string, author string, createdAt int64) (int6
 
 func initDB() error {
 	_, err := db.Exec(createPostTableQuery)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	return nil
+}
+
+func deletePostById(id int) error {
+	_, err := db.Exec(deletePostQuery, id)
 	if err != nil {
 		log.Print(err)
 		return err

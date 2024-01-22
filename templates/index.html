@@ -5,7 +5,7 @@
   {{range .Posts}}
   <li>
     <a href="/post/{{.ID}}"
-      >{{.Title}} by {{.Author}} on {{.CreatedAt}}</a
+      >{{.Title}} by {{.Author}} on {{.CreatedAt | date}}</a
     >
   </li>
   {{end}}
