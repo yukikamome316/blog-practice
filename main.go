@@ -28,12 +28,11 @@ const (
 			created_at INTEGER
 		)`
 
-	// ブログポストテーブルにデータを挿入するSQL文
 	insertPostQuery     = `INSERT INTO posts (title, body, author, created_at) VALUES (?, ?, ?, ?)`
 	selectPostByIdQuery = `SELECT * FROM posts WHERE id = ?`
-	// ブログポストテーブルから全てのデータを取得するSQL文
 	selectAllPostsQuery = `SELECT * FROM posts`
 	deletePostQuery     = `DELETE FROM posts WHERE id = ?`
+	updatePostQuery     = `UPDATE posts SET title = ?, body = ?, author = ?, created_at = ? WHERE id = ?`
 )
 
 var (
