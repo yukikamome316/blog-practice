@@ -19,7 +19,8 @@ const (
 	postPath     = templatePath + "/post.html"
 	editPath     = templatePath + "/edit.html"
 
-	dbPath = "./db.sqlite3"
+	publicPath = "./public"
+	dbPath     = "./db.sqlite3"
 
 	createPostTableQuery = `CREATE TABLE IF NOT EXISTS posts (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,6 +73,9 @@ func main() {
 	http.HandleFunc("/post/new", createPostHandler)
 	http.HandleFunc("/post/delete/", deletePostHandler)
 	http.HandleFunc("/post/edit/", editPostHandler)
+
+	// cssファイルを配信
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir(publicPath+"/css"))))
 
 	fmt.Println("Server is listening on http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

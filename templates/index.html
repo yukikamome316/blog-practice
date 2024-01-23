@@ -1,7 +1,8 @@
 {{define "body"}}
-<h1>{{.Text}}</h1>
-<a href="/post/new">新規作成</a>
-<ul>
+<link rel="stylesheet" href="/css/index.css">
+<h1 class="title">{{.Text}}</h1>
+<a href="/post/new" class="new-post-link">新規作成</a>
+<ul class="post-list">
   {{range .Posts}}
   <li>
     <a href="/post/{{.ID}}"

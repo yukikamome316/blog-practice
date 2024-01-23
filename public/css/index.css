@@ -1,0 +1,37 @@
+/* CSS for the blog post list */
+.post-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.post-list li {
+  margin-bottom: 20px;
+  flex-basis: 50%;
+}
+
+.post-list li a {
+  display: block;
+  color: #333;
+  text-decoration: none;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-list li a:hover {
+  color: #007bff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.post-list li .post-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.post-list li .post-date {
+  font-size: 14px;
+  color: #777;
+}
